@@ -1,0 +1,10 @@
+data:
+    name: 'rhd-dataset'
+model:
+    name: 'joint_recognition'
+    batch_size: 50
+    eval_batch_size: 50
+    learning_rate: 0.0001
+train_iter: 1000
+eval_set: 'test'
+num_keypoints: 21
