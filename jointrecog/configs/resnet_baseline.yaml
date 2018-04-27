@@ -1,10 +1,10 @@
 data:
-    name: 'rhd-dataset'
+    name: ''
 model:
-    name: 'joint_recognition'
+    name: 'resnet_baseline'
     batch_size: 50
     eval_batch_size: 50
     learning_rate: 0.0001
+    output_kernel: [3, 3]
 train_iter: 1000
 eval_set: 'test'
-num_keypoints: 21
