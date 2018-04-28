@@ -232,7 +232,7 @@ class BaseModel(metaclass=ABCMeta):
                     # Perform compatibility checks with the inputs of the child model
                     for i, spec in self.input_spec.items():
                         if i in output_shapes:
-                            tf.TensorShape(opeutput_shapes[i]).assert_is_compatible_with(
+                            tf.TensorShape(output_shapes[i]).assert_is_compatible_with(
                                 tf.TensorShape(spec['shape']))
 
                 # Used for input shapes of the prediction network
