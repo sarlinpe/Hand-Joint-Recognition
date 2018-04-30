@@ -119,7 +119,7 @@ class BaseModel(metaclass=ABCMeta):
             self.data_shape = {i: s['shape'] for i, s in self.input_spec.items()}
 
         # with tf.variable_scope(self.name, reuse=tf.AUTO_REUSE):
-        with tf.variable_scope(self.name, reuse=tf.AUTO_REUSE):
+        with tf.variable_scope('', reuse=tf.AUTO_REUSE):
             self._build_graph()
 
     def _gpu_tower(self, data, mode):
@@ -231,9 +231,9 @@ class BaseModel(metaclass=ABCMeta):
 
                     # Perform compatibility checks with the inputs of the child model
                     for i, spec in self.input_spec.items():
-                        if i in output_shapes:
-                            tf.TensorShape(output_shapes[i]).assert_is_compatible_with(
-                                tf.TensorShape(spec['shape']))
+                        assert i in output_shapes
+                        tf.TensorShape(output_shapes[i]).assert_is_compatible_with(
+                            tf.TensorShape(spec['shape']))
 
                 # Used for input shapes of the prediction network
                 if self.data_shape is None:

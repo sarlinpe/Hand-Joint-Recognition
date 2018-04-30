@@ -9,9 +9,9 @@ NUM_JOINTS = 21
 class ResnetBaseline(BaseModel):
     input_spec = {
             'image': {'shape': [None, None, None, 3], 'type': tf.float32},
-            'scoremap' : {'shape': [None, None, None, 1], 'type': tf.float32},
+            'scoremap' : {'shape': [None, None, None, NUM_JOINTS], 'type': tf.float32},
             'keypoints' : {'shape': [None, NUM_JOINTS, 2], 'type': tf.float32},
-            'disks' : {'shape': [None, None, None, 1], 'type': tf.float32}
+            'disks' : {'shape': [None, None, None, NUM_JOINTS], 'type': tf.float32}
     }
 
     default_config = { 'data': {'data_format': 'channels_last'}, 'model': {'output_kernel': [3, 3]}}
@@ -34,7 +34,7 @@ class ResnetBaseline(BaseModel):
                                              is_training=is_training,
                                              global_pool=False,
                                              scope='resnet_v2_50')
-                    feature_map = encoder['resnetbaseline/resnet_v2_50/block3']
+                    feature_map = encoder['resnet_v2_50/block3']
 
                 # Upsampling of feature map to input size
                 image = tf.image.resize_bilinear(image, [shape[0], shape[1]])

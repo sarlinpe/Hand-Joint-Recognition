@@ -13,6 +13,7 @@ class KaggleRhd(BaseDataset):
     split_filename = 'split.json'
     train_filename = 'training.h5'
     test_filename = 'testing.h5'
+    num_keypoints = 21
 
     default_config = {
             'shuffle_seed': 0,
@@ -64,9 +65,12 @@ class KaggleRhd(BaseDataset):
 
         def _preprocess_image(img):
             # BGR to RGB and NHW to HWN
-            return tf.reverse(tf.transpose(img, [1, 2, 0]), [-1])
+            img = tf.reverse(tf.transpose(img, [1, 2, 0]), [-1])
+            img.set_shape([None, None, 3])
+            return img
 
         def _preprocess_keypoints(kp):
+            kp.set_shape([None, 2])
             return tf.reverse(kp, [-1])
 
         def _crop_bbox(img, kp):
@@ -81,13 +85,13 @@ class KaggleRhd(BaseDataset):
             # Expand the edge of smaller size symmetrically
             bwidth = tf.reduce_max(bb_max - bb_min) / 2
             center = (bb_max + bb_min) / 2
-            bb_max = tf.to_int32(center + bwidth)
             bb_min = tf.to_int32(center - bwidth)
+            bb_max = tf.to_int32(center + bwidth)
             # Correct if out of bounds
             correction_min = tf.minimum(bb_min, 0)
             correction_max = tf.maximum(bb_max - (shape-1), 0)
-            bb_max += correction_min - correction_max
-            bb_min += correction_min - correction_max
+            bb_max -= correction_min + correction_max
+            bb_min -= correction_min + correction_max
             # Perform the cropping
             img = img[bb_min[0]:bb_max[0], bb_min[1]:bb_max[1], ...]
             kp -= tf.expand_dims(tf.to_float(bb_min), 0)
@@ -96,7 +100,6 @@ class KaggleRhd(BaseDataset):
         def _resize(img, kp):
             kp /= tf.to_float(tf.shape(img)[:2])
             kp *= tf.constant(config['preprocessing']['resize'], dtype=tf.float32)
-            img.set_shape([None, None, 3])
             img = tf.image.resize_images(img, config['preprocessing']['resize'],
                                          method=tf.image.ResizeMethod.BILINEAR)
             return img, kp
@@ -108,8 +111,8 @@ class KaggleRhd(BaseDataset):
                     tf.tile(tf.expand_dims(tf.range(shape[0]), 1), [1, shape[1]]))
             y_grid = tf.to_float(
                     tf.tile(tf.expand_dims(tf.range(shape[1]), 0), [shape[0], 1]))
-            x_diff = tf.expand_dims(x_grid, 0) - tf.reshape(kp[:, 0], [-1, 1, 1])
-            y_diff = tf.expand_dims(y_grid, 0) - tf.reshape(kp[:, 1], [-1, 1, 1])
+            x_diff = tf.expand_dims(x_grid, -1) - tf.reshape(kp[:, 0], [1, 1, -1])
+            y_diff = tf.expand_dims(y_grid, -1) - tf.reshape(kp[:, 1], [1, 1, -1])
             distance = tf.square(x_diff) + tf.square(y_diff)
             scoremap = tf.exp(
                     -distance/(2*tf.constant(float(config['scoremap_variance']))))
@@ -125,7 +128,7 @@ class KaggleRhd(BaseDataset):
                             idx, 'test', Path(DATA_PATH, self.test_filename), False),
                         [idx], tf.float32))
             d = d.map(_preprocess_image)
-            d = d.map(lambda image: {'image': image})
+            d = d.map(lambda i: (i, tf.zeros([self.num_keypoints, 2])))  # dummy kp
         else:
             d = d.map(
                     lambda idx: tuple(tf.py_func(
@@ -136,8 +139,9 @@ class KaggleRhd(BaseDataset):
                     lambda img, kp: (_preprocess_image(img), _preprocess_keypoints(kp)))
             d = d.map(_crop_bbox)
             d = d.map(_resize)
-            d = d.map(lambda image, kp: {'image': image, 'keypoints': kp})
-            d = d.map(_add_label_maps)
+
+        d = d.map(lambda image, kp: {'image': image, 'keypoints': kp})
+        d = d.map(_add_label_maps)
 
         if config['cache_in_memory']:
             tf.logging.info('Caching dataset, fist access will take some time.')
