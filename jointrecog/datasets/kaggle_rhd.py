@@ -118,8 +118,7 @@ class KaggleRhd(BaseDataset):
                     -distance/(2*tf.constant(float(config['scoremap_variance']))))
             disks = tf.less_equal(
                     distance, tf.to_float(tf.square(config['disk_radius'])))
-            data.update({'scoremap': scoremap, 'disks': disks})
-            return data
+            return {**data, **{'scoremap': scoremap, 'disks': disks}}
 
         if split_name == 'test':
             d = d.map(
