@@ -358,6 +358,7 @@ class BaseModel(metaclass=ABCMeta):
     def _checkpoint_var_search(self, checkpoint_path):
         reader = tf.train.NewCheckpointReader(checkpoint_path)
         saved_shapes = reader.get_variable_to_shape_map()
+        saved_shapes.pop('global_step', None)
         model_names = set([v.name.split(':')[0] for v in tf.global_variables()])
         checkpoint_names = set(saved_shapes.keys())
         found_names = model_names & checkpoint_names
@@ -377,10 +378,8 @@ class BaseModel(metaclass=ABCMeta):
                 sorted(missing_names), sorted(shape_conflicts))
 
     def load(self, checkpoint_path, flexible_restore=True):
-        if tf.gfile.IsDirectory(checkpoint_path):
-            checkpoint_path = tf.train.latest_checkpoint(checkpoint_path)
-            if checkpoint_path is None:
-                raise ValueError('Checkpoint directory is empty.')
+        if tf.gfile.Exists(checkpoint_path) == False:
+            raise ValueError('Checkpoint file does not exist.')
         if flexible_restore:
             var_list, found, missing, conflicts = self._checkpoint_var_search(
                     checkpoint_path)

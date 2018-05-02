@@ -11,4 +11,4 @@ model:
     output_kernel: [3, 3]
 train_iter: 1000
 eval_set: 'val'
-weights: 'resnet_v2_50_2017_04_14/resnet_v2_50.ckpt'
+weights: 'resnet_v2_50/resnet_v2_50.ckpt'
