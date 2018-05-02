@@ -4,14 +4,14 @@ from tensorflow.contrib import slim
 from .base_model import BaseModel, Mode
 from .backbones import resnet_v2 as resnet
 
-NUM_JOINTS = 21
+NUM_KEYPOINTS = 21
 
 class ResnetBaseline(BaseModel):
     input_spec = {
         'image': {'shape': [None, None, None, 3], 'type': tf.float32},
-            'scoremap' : {'shape': [None, None, None, NUM_JOINTS], 'type': tf.float32},
-            'keypoints' : {'shape': [None, NUM_JOINTS, 2], 'type': tf.float32},
-            'disks' : {'shape': [None, None, None, NUM_JOINTS], 'type': tf.float32}
+        'scoremap' : {'shape': [None, None, None, NUM_KEYPOINTS], 'type': tf.float32},
+        'keypoints' : {'shape': [None, NUM_KEYPOINTS, 2], 'type': tf.float32},
+        'disks' : {'shape': [None, None, None, NUM_KEYPOINTS], 'type': tf.float32}
     }
 
     default_config = {'model': {'output_kernel': [3, 3]}}
@@ -20,9 +20,8 @@ class ResnetBaseline(BaseModel):
         image = inputs['image']
 
         with tf.name_scope('prediction'):
-
             is_training = (mode == Mode.TRAIN)
-            shape = tf.shape(image)[1:3]
+            input_shape = tf.shape(image)[1:3]
 
             with slim.arg_scope([slim.conv2d, slim.batch_norm], trainable=is_training):
                 with slim.arg_scope(resnet.resnet_arg_scope()):
@@ -34,16 +33,18 @@ class ResnetBaseline(BaseModel):
                     feature_map = encoder['resnet_v2_50/block3']
 
                 # Upsampling of feature map to input size
-                image = tf.image.resize_bilinear(image, [shape[0], shape[1]])
-                # Apply convolution to obtain one tensor slice per keypoint
+                image = tf.image.resize_bilinear(image, [input_shape[0], input_shape[1]])
+                # Apply convolution to obtain one  per keypoint
                 scores = slim.conv2d(
-                        image, NUM_JOINTS, kernel_size = config['model']['output_kernel'],
-                        activation_fn = None, scope = 'convOut')
+                        image, NUM_KEYPOINTS,
+                        kernel_size = config['model']['output_kernel'],
+                        activation_fn = None,
+                        scope = 'convOut')
 
-            x_grid = tf.to_float(tf.expand_dims(tf.expand_dims(
-                tf.tile(tf.expand_dims(tf.range(shape[0]), 1), [1, shape[1]]), -1), 0))
-            y_grid = tf.to_float(tf.expand_dims(tf.expand_dims(
-                tf.tile(tf.expand_dims(tf.range(shape[1]), 0), [shape[0], 1]), -1), 0))
+            x_grid, y_grid = tf.meshgrid(
+                tf.to_float(tf.range(input_shape[0])),
+                tf.to_float(tf.range(input_shape[1])),
+                indexing = 'ij')
 
             with tf.name_scope('expectation'):
                 # Predict joint locations from expectation values of scoremaps
@@ -56,8 +57,8 @@ class ResnetBaseline(BaseModel):
 
             with tf.name_scope('maxscore'):
                 # Predict joint locations from pixels with maximum score
-                mask = tf.equal(scores,
-                    tf.reduce_max(scores, axis=[1, 2], keepdims=True))
+                mask = tf.equal(scores, tf.reduce_max(scores, axis=[1, 2],
+                                keepdims=True))
                 max_scores = tf.reduce_max(tf.to_float(mask) * x_grid, axis=[1, 2])
 
         return {'scoremap': scores,
