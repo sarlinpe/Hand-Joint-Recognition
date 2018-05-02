@@ -1,6 +1,8 @@
 data:
     name: 'kaggle_rhd'
-    data_format: 'channels_last'
+    validation_size: 5000
+    cache_in_memory: true
+    scoremap_variance: 7
 model:
     name: 'resnet_baseline'
     batch_size: 50
