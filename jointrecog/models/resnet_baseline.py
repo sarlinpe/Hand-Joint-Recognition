@@ -45,6 +45,8 @@ class ResnetBaseline(BaseModel):
                 tf.to_float(tf.range(input_shape[0])),
                 tf.to_float(tf.range(input_shape[1])),
                 indexing = 'ij')
+            x_grid = tf.expand_dims(tf.expand_dims(x_grid, 0), -1)
+            y_grid = tf.expand_dims(tf.expand_dims(y_grid, 0), -1)
 
             with tf.name_scope('expectation'):
                 # Predict joint locations from expectation values of scoremaps

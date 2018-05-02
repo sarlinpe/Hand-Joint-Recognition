@@ -193,7 +193,8 @@ class BaseModel(metaclass=ABCMeta):
                 tf.summary.scalar('loss', self.loss)
 
             # Create optimizer ops
-            self.global_step = tf.Variable(0, trainable=False, name='global_step')
+            self.global_step = tf.Variable(0, trainable=False, name='global_step',
+                                        collections=[tf.GraphKeys.LOCAL_VARIABLES])
             opt = tf.train.RMSPropOptimizer(self.config['learning_rate'])
             with tf.control_dependencies(update_ops):
                 self.trainer = opt.apply_gradients(
