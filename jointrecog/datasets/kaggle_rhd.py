@@ -34,7 +34,7 @@ class KaggleRhd(BaseDataset):
         random.Random(config['shuffle_seed']).shuffle(indices)
         split = {'validation': indices[:config['validation_size']],
                  'training': indices[config['validation_size']:]}
-        with open(filepath, 'w') as f:
+        with open(str(filepath), 'w') as f:
             json.dump(split, f)
 
     def _init_dataset(self, **config):
@@ -42,7 +42,7 @@ class KaggleRhd(BaseDataset):
         if not split_filepath.exists():
             self.create_split_file(split_filepath, config)
 
-        with open(split_filepath, 'r') as f:
+        with open(str(split_filepath), 'r') as f:
             split = json.load(f)
         with h5py.File(Path(DATA_PATH, self.test_filename), 'r') as hf:
             split['test'] = list(range(len(hf['test']['img'])))
