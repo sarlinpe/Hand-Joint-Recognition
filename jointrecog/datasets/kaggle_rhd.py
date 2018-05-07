@@ -19,6 +19,7 @@ class KaggleRhd(BaseDataset):
             'shuffle_seed': 0,
             'validation_size': 5000,
             'cache_in_memory': False,
+            'num_threads': 10,
             'preprocessing': {
                 'resize': [128, 128],
                 'bbox_margin': 8,
@@ -50,18 +51,19 @@ class KaggleRhd(BaseDataset):
 
     def _get_data(self, split, split_name, **config):
         d = tf.data.Dataset.from_tensor_slices(split[split_name])
+        filename = self.test_filename if split_name == 'test' else self.train_filename
+        data_file = h5py.File(Path(DATA_PATH, filename), 'r')
 
         # TODO: use a generator if too slow:
         # https://stackoverflow.com/questions/48309631/tensorflow-tf-data-dataset-reading-large-hdf5-files
-        def _read_element(idx, entry, filepath, has_label):
-            with h5py.File(filepath, 'r') as hf:
-                img = hf[entry]['img'][idx]
-                img = img.astype(np.float32)
-                if has_label:
-                    kp = hf[entry]['kp_2D'][idx].astype(np.float32)
-                    return img, kp
-                else:
-                    return img
+        def _read_element(idx, entry, has_label):
+            img = data_file[entry]['img'][idx]
+            img = img.astype(np.float32)
+            if has_label:
+                kp = data_file[entry]['kp_2D'][idx].astype(np.float32)
+                return img, kp
+            else:
+                return img
 
         def _preprocess_image(img):
             # BGR to RGB and NHW to HWN
@@ -123,24 +125,23 @@ class KaggleRhd(BaseDataset):
         if split_name == 'test':
             d = d.map(
                     lambda idx: tf.py_func(
-                        lambda idx: _read_element(
-                            idx, 'test', Path(DATA_PATH, self.test_filename), False),
-                        [idx], tf.float32))
-            d = d.map(_preprocess_image)
+                        lambda idx: _read_element(idx, 'test', False),
+                        [idx], tf.float32), num_parallel_calls=config['num_threads'])
+            d = d.map(_preprocess_image, num_parallel_calls=config['num_threads'])
             d = d.map(lambda i: (i, tf.zeros([self.num_keypoints, 2])))  # dummy kp
         else:
             d = d.map(
                     lambda idx: tuple(tf.py_func(
-                        lambda idx: _read_element(
-                            idx, 'train', Path(DATA_PATH, self.train_filename), True),
-                        [idx], [tf.float32, tf.float32])))
+                        lambda idx: _read_element(idx, 'train', True),
+                        [idx], [tf.float32, tf.float32])),
+                    num_parallel_calls=config['num_threads'])
             d = d.map(
                     lambda img, kp: (_preprocess_image(img), _preprocess_keypoints(kp)))
-            d = d.map(_crop_bbox)
-            d = d.map(_resize)
+            d = d.map(_crop_bbox, num_parallel_calls=config['num_threads'])
+            d = d.map(_resize, num_parallel_calls=config['num_threads'])
 
         d = d.map(lambda image, kp: {'image': image, 'keypoints': kp})
-        d = d.map(_add_label_maps)
+        d = d.map(_add_label_maps, num_parallel_calls=config['num_threads'])
 
         if config['cache_in_memory']:
             tf.logging.info('Caching dataset, fist access will take some time.')
