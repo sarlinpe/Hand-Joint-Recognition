@@ -25,9 +25,6 @@ python3 setup.py install
 ```
 
 ## Structure
-
-* `datasets/` - all data sources required for training/validation/testing.
-* `outputs/` - any output for a model will be placed here, including logs, summaries, checkpoints, and Kaggle submission `.csv` files.
 * `src/` - all source code.
     * `core/` - base classes
     * `datasources/` - routines for reading and preprocessing entries for training and testing

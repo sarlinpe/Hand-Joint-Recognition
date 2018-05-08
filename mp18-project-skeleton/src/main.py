@@ -4,15 +4,18 @@ import argparse
 
 import coloredlogs
 import tensorflow as tf
-
+import os
+from settings import DATA_PATH, EXPER_PATH
 
 if __name__ == '__main__':
 
     # Set global log level
     parser = argparse.ArgumentParser(description='Train a 2D joint estimation model.')
+    parser.add_argument('exper_name', type=str)
     parser.add_argument('-v', type=str, help='logging level', default='info',
                         choices=['debug', 'info', 'warning', 'error', 'critical'])
     args = parser.parse_args()
+    exper_name = args.exper_name
     coloredlogs.install(
         datefmt='%d/%m %H:%M',
         fmt='%(asctime)s %(levelname)s %(message)s',
@@ -34,6 +37,9 @@ if __name__ == '__main__':
             # Tensorflow session
             # Note: The same session must be used for the model and the data sources.
             session,
+
+            # Set experiment output directory
+            output_dir=os.path.join(EXPER_PATH, exper_name),
 
             # The learning schedule describes in which order which part of the network should be
             # trained and with which learning rate.
@@ -62,7 +68,7 @@ if __name__ == '__main__':
                 'real': HDF5Source(
                     session,
                     batch_size,
-                    hdf_path='../datasets/training.h5',
+                    hdf_path=os.path.join(DATA_PATH,'training.h5'),
                     keys_to_use=['train'],
                     min_after_dequeue=2000,
                 ),
@@ -73,7 +79,7 @@ if __name__ == '__main__':
             #     'real': HDF5Source(
             #         session,
             #         batch_size,
-            #         hdf_path='../datasets/validation.h5',
+            #         hdf_path=os.path.join(DATA_PATH,'validation.h5'),
             #         keys_to_use=['test'],
             #         testing=True,
             #     ),

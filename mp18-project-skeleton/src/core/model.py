@@ -28,7 +28,8 @@ class BaseModel(object):
                  learning_schedule: List[Dict[str, Any]],
                  train_data: Dict[str, BaseDataSource],
                  test_data: Dict[str, BaseDataSource] = {},
-                 test_losses_or_metrics: str = None):
+                 test_losses_or_metrics: str = None,
+                 output_dir: str = None):
         """Initialize model with data sources and parameters."""
         assert len(train_data) > 0
         self._tensorflow_session = tensorflow_session
@@ -36,6 +37,7 @@ class BaseModel(object):
         self._test_data = test_data
         self._test_losses_or_metrics = test_losses_or_metrics
         self._initialized = False
+        self._output_path = output_dir
 
         # Extract and keep known prefixes/scopes
         self._learning_schedule = learning_schedule
@@ -79,8 +81,12 @@ class BaseModel(object):
     @property
     def output_path(self):
         """Path to store logs and model weights into."""
-        return '%s/%s' % (os.path.abspath(os.path.dirname(__file__) + '/../../outputs'),
+        return '%s/%s' % (self._output_path,
                           self.identifier)
+
+    @output_path.setter
+    def output_path(self, output_dir):
+        self._output_path = output_dir
 
     def _build_all_models(self):
         """Build training (GPU/CPU) and testing (CPU) streams."""
