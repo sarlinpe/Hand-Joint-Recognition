@@ -2,8 +2,10 @@
 from typing import Dict
 
 import tensorflow as tf
+from tensorflow.contrib import slim
 
 from core import BaseDataSource, BaseModel
+from .backbones import resnet_v2 as resnet
 
 class Resnet50(BaseModel):
     """MnistNet architecture as used in [Zhang et al. CVPR'15]."""
@@ -17,8 +19,12 @@ class Resnet50(BaseModel):
         y = input_tensors['kp_2D']
 
         with tf.variable_scope('conv'):
-            pass
-            # TODO resnet50 backbone
+            with slim.arg_scope(resnet.resnet_arg_scope()):
+                _, encoder = resnet.resnet_v2_50(x
+                                    is_training=True,
+                                    global_pool=False,
+                                    scope='resnet_v2_50')
+                x = encoder['resnet_v2_50/block3']
 
         with tf.variable_scope('fc'):
             # Flatten the 50 feature maps down to one vector
