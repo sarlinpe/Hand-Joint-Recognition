@@ -96,7 +96,7 @@ if __name__ == '__main__':
             HDF5Source(
                 session,
                 batch_size,
-                hdf_path='../datasets/testing.h5',
+                hdf_path=os.path.join(DATA_PATH,'testing.h5'),
                 keys_to_use=['test'],
                 testing=True,
             )
