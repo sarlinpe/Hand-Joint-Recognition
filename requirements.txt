@@ -7,3 +7,5 @@ pyyaml
 flake8
 h5py
 jupyter
+coloredlogs
+pandas
