@@ -7,7 +7,7 @@ NUM_KEYPOINTS = 21
 class MnistBaseline(BaseModel):
     """MnistNet architecture as used in [Zhang et al. CVPR'15]."""
     input_spec = {
-        'image': {'shape': [None, None, None, 3], 'type': tf.float32},
+        'image': {'shape': [None, 128, 128, 3], 'type': tf.float32},
         'keypoints': {'shape': [None, NUM_KEYPOINTS, 2], 'type': tf.float32}
     }
 
@@ -26,9 +26,7 @@ class MnistBaseline(BaseModel):
                 x = tf.layers.max_pooling2d(x, pool_size=3, strides=2,
                                             padding='same', data_format='channels_last')
         with tf.variable_scope('fc'):
-            print(x.get_shape().as_list())
             x = tf.contrib.layers.flatten(x)
-            print(x.get_shape().as_list())
             x = tf.layers.dense(x, units=42, name='out')
 
             x = tf.reshape(x, (-1, 21, 2))
