@@ -15,6 +15,7 @@ class MnistBaseline(BaseModel):
     def _model(self, inputs, mode, **config):
         """Build model."""
         x = inputs['image']
+        x.set_shape([None, 128, 128, 3])
         with tf.variable_scope('conv'):
             # The MnistNet architecture is formed of 2 convs and 2 fcs
             num_filters = (32, 32, 32)
@@ -28,7 +29,7 @@ class MnistBaseline(BaseModel):
                                             padding='same', data_format='channels_last')
         with tf.variable_scope('fc'):
             x = tf.contrib.layers.flatten(x)
-            x = tf.layers.dense(x, units=42, name='out')
+            x = tf.layers.dense(x, units=2*NUM_KEYPOINTS, name='out')
             x = tf.reshape(x, (-1, 21, 2))
 
         return {'keypoints': x}
