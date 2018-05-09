@@ -2,6 +2,7 @@ import argparse
 import yaml
 from pathlib import Path
 from tqdm import tqdm
+import numpy as np
 import pandas as pd
 
 import experiment
@@ -12,10 +13,11 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('config', type=str)
     parser.add_argument('experiment_name', type=str)
+    parser.add_argument('--export_name', type=str, default=None)
     args = parser.parse_args()
 
     experiment_name = args.experiment_name
-    export_name = experiment_name
+    export_name = args.export_name if args.export_name else experiment_name
     with open(args.config, 'r') as f:
         config = yaml.load(f)
 
@@ -34,10 +36,9 @@ if __name__ == '__main__':
             except dataset.end_set:
                 break
             kp = net.predict(data, keys='keypoints')
+            kp = np.flip(kp, axis=-1)
             predictions += list(kp.reshape(1, 2*21))
             pbar.update(1)
-
-    print(predictions)
 
     coloumns = []
     for i in range(21):
