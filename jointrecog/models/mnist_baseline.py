@@ -1,8 +1,9 @@
 import tensorflow as tf
 
-from .base_model import BaseModel, Mode
+from .base_model import BaseModel
 
 NUM_KEYPOINTS = 21
+
 
 class MnistBaseline(BaseModel):
     """MnistNet architecture as used in [Zhang et al. CVPR'15]."""
@@ -28,7 +29,6 @@ class MnistBaseline(BaseModel):
         with tf.variable_scope('fc'):
             x = tf.contrib.layers.flatten(x)
             x = tf.layers.dense(x, units=42, name='out')
-
             x = tf.reshape(x, (-1, 21, 2))
 
         return {'keypoints': x}
@@ -42,6 +42,6 @@ class MnistBaseline(BaseModel):
     def _metrics(self, outputs, inputs, **config):
         with tf.name_scope('metrics'):
             metrics = {}
-            metrics['l2dist'] = tf.reduce_mean(tf.squared_difference(
-                                        inputs['keypoints'], outputs['keypoints']))
-            return metrics
+            diff = tf.square(inputs['keypoints'] - outputs['keypoints'])
+            metrics['l2error'] = tf.reduce_mean(tf.reduce_sum(diff, axis=[1, 2]))
+        return metrics
