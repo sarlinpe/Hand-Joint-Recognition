@@ -24,8 +24,8 @@ class KaggleRhd(BaseDataset):
                 'resize': [128, 128],
                 'bbox_margin': 8,
             },
-            'disk_radius': 7,
-            'scoremap_variance': 25
+            'disk_radius': None,
+            'scoremap_variance': None
     }
 
     def create_split_file(self, filepath, config):
@@ -116,11 +116,13 @@ class KaggleRhd(BaseDataset):
             x_diff = tf.expand_dims(x_grid, -1) - tf.reshape(kp[:, 0], [1, 1, -1])
             y_diff = tf.expand_dims(y_grid, -1) - tf.reshape(kp[:, 1], [1, 1, -1])
             distance = tf.square(x_diff) + tf.square(y_diff)
-            scoremap = tf.exp(
-                    -distance/(2*tf.constant(float(config['scoremap_variance']))))
-            disks = tf.less_equal(
-                    distance, tf.to_float(tf.square(config['disk_radius'])))
-            return {**data, **{'scoremap': scoremap, 'disks': disks}}
+            if config['scoremap_variance'] is not None:
+                data.update({'scoremap': tf.exp(
+                        -distance/(2*tf.constant(float(config['scoremap_variance']))))})
+            if config['disk_radius'] is not None:
+                data.update({'disks': tf.less_equal(
+                        distance, tf.to_float(tf.square(config['disk_radius'])))})
+            return data
 
         if split_name == 'test':
             d = d.map(
@@ -141,10 +143,11 @@ class KaggleRhd(BaseDataset):
             d = d.map(_resize, num_parallel_calls=config['num_threads'])
 
         d = d.map(lambda image, kp: {'image': image, 'keypoints': kp})
-        d = d.map(_add_label_maps, num_parallel_calls=config['num_threads'])
 
         if config['cache_in_memory']:
             tf.logging.info('Caching dataset, fist access will take some time.')
             d = d.cache()
+
+        d = d.map(_add_label_maps, num_parallel_calls=config['num_threads'])
 
         return d
