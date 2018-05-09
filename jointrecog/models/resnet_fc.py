@@ -6,6 +6,7 @@ from .backbones import resnet_v2 as resnet
 
 NUM_KEYPOINTS = 21
 
+
 class ResnetFc(BaseModel):
     input_spec = {
         'image': {'shape': [None, 128, 128, 3], 'type': tf.float32},
@@ -13,22 +14,21 @@ class ResnetFc(BaseModel):
     }
 
     def _model(self, inputs, mode, **config):
-        """Build model."""
-        with tf.name_scope('prediction'):
-            is_training = (mode == Mode.TRAIN)
-            x = inputs['image']
-            with slim.arg_scope(resnet.resnet_arg_scope()):
-                    _, encoder = resnet.resnet_v2_101(
-                                                x,
-                                                is_training=is_training,
-                                                global_pool=False,
-                                                scope='resnet_v2_101')
-                    x = encoder['resnet_v2_101/block3']
-            with tf.variable_scope('fc'):
-                x = tf.contrib.layers.flatten(x)
-                x = tf.layers.dense(x, units=2*NUM_KEYPOINTS, name='out')
+        is_training = (mode == Mode.TRAIN)
+        x = inputs['image']
+        x.set_shape([None, 128, 128, 3])
 
-                x = tf.reshape(x, (-1, 21, 2))
+        with slim.arg_scope(resnet.resnet_arg_scope()):
+                _, encoder = resnet.resnet_v2_101(
+                                            x,
+                                            is_training=is_training,
+                                            global_pool=False,
+                                            scope='resnet_v2_101')
+                x = encoder['resnet_v2_101/block3']
+        with tf.variable_scope('fc'):
+            x = tf.contrib.layers.flatten(x)
+            x = tf.layers.dense(x, units=2*NUM_KEYPOINTS, name='out')
+            x = tf.reshape(x, (-1, NUM_KEYPOINTS, 2))
 
         return {'keypoints': x}
 
