@@ -3,11 +3,12 @@ from tensorflow.contrib import slim
 
 from .base_model import BaseModel, Mode
 from .backbones import resnet_v2 as resnet
+from .utils import kaggle_mse
 
 NUM_KEYPOINTS = 21
 
 
-class ResnetBaseline(BaseModel):
+class ResnetScoremap(BaseModel):
     input_spec = {
         'image': {'shape': [None, None, None, 3], 'type': tf.float32},
         'scoremap': {'shape': [None, None, None, NUM_KEYPOINTS], 'type': tf.float32},
@@ -80,8 +81,8 @@ class ResnetBaseline(BaseModel):
     def _metrics(self, outputs, inputs, **config):
         metrics = {}
         with tf.name_scope('metrics'):
-            diff = tf.square(inputs['keypoints'] - outputs['expectations'])
-            metrics['expectation_l2'] = tf.reduce_mean(tf.reduce_sum(diff, axis=[1, 2]))
-            diff = tf.square(inputs['keypoints'] - outputs['maxscores'])
-            metrics['maximum_l2'] = tf.reduce_mean(tf.reduce_sum(diff, axis=[1, 2]))
+            metrics['expectation_l2'] = kaggle_mse(
+                    outputs['expectations'], inputs['keypoints'])
+            metrics['maximum_l2'] = kaggle_mse(
+                    outputs['maxscores'], inputs['keypoints'])
         return metrics

@@ -1,11 +1,12 @@
 import tensorflow as tf
 
 from .base_model import BaseModel
+from .utils import kaggle_mse
 
 NUM_KEYPOINTS = 21
 
 
-class MnistBaseline(BaseModel):
+class MnistFc(BaseModel):
     """MnistNet architecture as used in [Zhang et al. CVPR'15]."""
     input_spec = {
         'image': {'shape': [None, 128, 128, 3], 'type': tf.float32},
@@ -42,7 +43,5 @@ class MnistBaseline(BaseModel):
 
     def _metrics(self, outputs, inputs, **config):
         with tf.name_scope('metrics'):
-            metrics = {}
-            diff = tf.square(inputs['keypoints'] - outputs['keypoints'])
-            metrics['l2error'] = tf.reduce_mean(tf.reduce_sum(diff, axis=[1, 2]))
+            metrics = {'mse': kaggle_mse(outputs['keypoints'], inputs['keypoints'])}
         return metrics

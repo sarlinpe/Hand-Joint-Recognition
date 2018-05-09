@@ -3,6 +3,7 @@ from tensorflow.contrib import slim
 
 from .base_model import BaseModel, Mode
 from .backbones import resnet_v2 as resnet
+from .utils import kaggle_mse
 
 NUM_KEYPOINTS = 21
 
@@ -40,7 +41,5 @@ class ResnetFc(BaseModel):
 
     def _metrics(self, outputs, inputs, **config):
         with tf.name_scope('metrics'):
-            metrics = {}
-            diff = tf.square(inputs['keypoints'] - outputs['keypoints'])
-            metrics['l2error'] = tf.reduce_mean(tf.reduce_sum(diff, axis=[1, 2]))
+            metrics = {'mse': kaggle_mse(outputs['keypoints'], inputs['keypoints'])}
         return metrics

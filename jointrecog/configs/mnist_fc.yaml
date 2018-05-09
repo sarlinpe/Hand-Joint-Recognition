@@ -3,7 +3,7 @@ data:
     validation_size: 5000
     cache_in_memory: false
 model:
-    name: 'mnist_baseline'
+    name: 'mnist_fc'
     batch_size: 32
     eval_batch_size: 32
     learning_rate: 0.001
