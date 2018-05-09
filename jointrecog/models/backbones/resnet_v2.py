@@ -113,6 +113,7 @@ def resnet_v2(inputs,
               num_classes=None,
               is_training=True,
               global_pool=True,
+              input_pool=True,
               output_stride=None,
               include_root_block=True,
               spatial_squeeze=True,
@@ -198,7 +199,8 @@ def resnet_v2(inputs,
           with slim.arg_scope([slim.conv2d],
                               activation_fn=None, normalizer_fn=None):
             net = resnet_utils.conv2d_same(net, 64, 7, stride=2, scope='conv1')
-          net = slim.max_pool2d(net, [3, 3], stride=2, scope='pool1')
+          if input_pool:
+            net = slim.max_pool2d(net, [3, 3], stride=2, scope='pool1')
         net = resnet_utils.stack_blocks_dense(net, blocks, output_stride)
         # This is needed because the pre-activation variant does not have batch
         # normalization or activation functions in the residual unit output. See
