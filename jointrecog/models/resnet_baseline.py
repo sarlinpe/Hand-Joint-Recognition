@@ -10,9 +10,9 @@ NUM_KEYPOINTS = 21
 class ResnetBaseline(BaseModel):
     input_spec = {
         'image': {'shape': [None, None, None, 3], 'type': tf.float32},
-        'scoremap' : {'shape': [None, None, None, NUM_KEYPOINTS], 'type': tf.float32},
-        'keypoints' : {'shape': [None, NUM_KEYPOINTS, 2], 'type': tf.float32},
-        'disks' : {'shape': [None, None, None, NUM_KEYPOINTS], 'type': tf.float32}
+        'scoremap': {'shape': [None, None, None, NUM_KEYPOINTS], 'type': tf.float32},
+        'keypoints': {'shape': [None, NUM_KEYPOINTS, 2], 'type': tf.float32},
+        'disks': {'shape': [None, None, None, NUM_KEYPOINTS], 'type': tf.float32}
     }
 
     default_config = {
@@ -40,7 +40,7 @@ class ResnetBaseline(BaseModel):
                 scores = slim.conv2d(
                         features, NUM_KEYPOINTS,
                         kernel_size=config['output_kernel'],
-                        activation_fn=None,
+                        activation_fn=tf.nn.softplus,
                         scope='convOut')
 
             x_grid, y_grid = tf.meshgrid(
@@ -63,7 +63,9 @@ class ResnetBaseline(BaseModel):
                 # Predict joint locations from pixels with maximum score
                 mask = tf.equal(scores, tf.reduce_max(scores, axis=[1, 2],
                                 keepdims=True))
-                max_scores = tf.reduce_max(tf.to_float(mask) * x_grid, axis=[1, 2])
+                max_x = tf.reduce_max(tf.to_float(mask) * x_grid, axis=[1, 2])
+                max_y = tf.reduce_max(tf.to_float(mask) * y_grid, axis=[1, 2])
+                max_scores = tf.stack([max_x, max_y], axis=-1)
 
         return {'scoremap': scores,
                 'expectations': expectations,
@@ -79,5 +81,7 @@ class ResnetBaseline(BaseModel):
         metrics = {}
         with tf.name_scope('metrics'):
             diff = tf.square(inputs['keypoints'] - outputs['expectations'])
-            metrics['l2dist'] = tf.reduce_mean(tf.reduce_sum(diff, axis=[1, 2]))
+            metrics['expectation_l2'] = tf.reduce_mean(tf.reduce_sum(diff, axis=[1, 2]))
+            diff = tf.square(inputs['keypoints'] - outputs['maxscores'])
+            metrics['maximum_l2'] = tf.reduce_mean(tf.reduce_sum(diff, axis=[1, 2]))
         return metrics
