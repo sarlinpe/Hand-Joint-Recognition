@@ -23,6 +23,7 @@ class KaggleRhd(BaseDataset):
             'preprocessing': {
                 'resize': [128, 128],
                 'bbox_margin': 8,
+                'bbox_symmetric': False,
             },
             'disk_radius': None,
             'scoremap_variance': None
@@ -84,11 +85,14 @@ class KaggleRhd(BaseDataset):
             # Add margin to get bound box corners
             bb_min = tf.maximum(kp_min - margin, 0)
             bb_max = tf.minimum(kp_max + margin, shape-1)
-            # Expand the edge of smaller size symmetrically
-            bwidth = tf.reduce_max(bb_max - bb_min) / 2
-            center = (bb_max + bb_min) / 2
-            bb_min = tf.to_int32(center - bwidth)
-            bb_max = tf.to_int32(center + bwidth)
+            # Expand the edge of smaller size, symmetrically or not
+            if config['preprocessing']['bbox_symmetric']:
+                bwidth = tf.reduce_max(bb_max - bb_min) / 2
+                center = (bb_max + bb_min) / 2
+                bb_min = tf.to_int32(center - bwidth)
+                bb_max = tf.to_int32(center + bwidth)
+            else:
+                bb_max = tf.to_int32(bb_min + tf.reduce_max(bb_max - bb_min))
             # Correct if out of bounds
             correction_min = tf.minimum(bb_min, 0)
             correction_max = tf.maximum(bb_max - (shape-1), 0)
