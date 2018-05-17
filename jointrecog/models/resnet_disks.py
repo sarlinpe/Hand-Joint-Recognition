@@ -3,6 +3,7 @@ from tensorflow.contrib import slim
 
 from .base_model import BaseModel, Mode
 from .backbones import resnet_v2 as resnet
+from .utils import kaggle_mse
 
 NUM_KEYPOINTS = 21
 
@@ -76,8 +77,7 @@ class ResnetDisks(BaseModel):
                 'p_max': p_max}
 
     def _loss(self, outputs, inputs, **config):
-        labels = inputs['disks']
-        labels = tf.cast(labels, dtype=tf.int64)
+        labels = tf.cast(inputs['disks'], dtype=tf.int64)
         logits = outputs['logits']
         with tf.name_scope('loss'):
             loss = tf.losses.sigmoid_cross_entropy(labels, logits)
@@ -86,10 +86,9 @@ class ResnetDisks(BaseModel):
         return loss
 
     def _metrics(self, outputs, inputs, **config):
-        metrics = {}
         with tf.name_scope('metrics'):
-            diff = tf.square(inputs['keypoints'] - outputs['expectations'])
-            metrics['expectation_l2'] = tf.reduce_mean(tf.reduce_sum(diff, axis=[1, 2]))
-            diff = tf.square(inputs['keypoints'] - outputs['p_max'])
-            metrics['maximum_l2'] = tf.reduce_mean(tf.reduce_sum(diff, axis=[1, 2]))
+            metrics = {'mse_exp': kaggle_mse(outputs['expectations'],
+                                             inputs['keypoints']),
+                       'mse_maxp': kaggle_mse(outputs['p_max'],
+                                              inputs['keypoints'])}
         return metrics
