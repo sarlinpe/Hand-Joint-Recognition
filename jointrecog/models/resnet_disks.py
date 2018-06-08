@@ -31,10 +31,9 @@ class ResnetDisks(BaseModel):
                                         x,
                                         is_training=is_training,
                                         global_pool=False,
-                                        input_pool=False,
+                                        input_pool=True,
                                         scope='resnet_v2_152')
-                x = encoder['resnet_v2_152/block2']
-
+                x = encoder['resnet_v2_152/block3']
             # Upsampling of feature map to input size
             x = tf.image.resize_bilinear(x, input_shape)
             # Apply convolution to obtain one  per keypoint
@@ -55,7 +54,7 @@ class ResnetDisks(BaseModel):
         x_grid = tf.expand_dims(tf.expand_dims(x_grid, 0), -1)
         y_grid = tf.expand_dims(tf.expand_dims(y_grid, 0), -1)
 
-        with tf.name_scope('expectation'):
+        with tf.name_scope('expectations'):
             # Predict joint locations from expectation values of scoremaps
             # Calculate expectation as weighted avg of grid * scoremap
             expectations_x = tf.reduce_sum(x_grid * logits, axis=[1, 2])
@@ -73,7 +72,7 @@ class ResnetDisks(BaseModel):
             p_max = tf.stack([p_max_x, p_max_y], axis=-1)
 
         return {'logits': logits,
-                'expectations': expectations,
+                'keypoints': expectations,
                 'p_max': p_max}
 
     def _loss(self, outputs, inputs, **config):
@@ -87,7 +86,7 @@ class ResnetDisks(BaseModel):
 
     def _metrics(self, outputs, inputs, **config):
         with tf.name_scope('metrics'):
-            metrics = {'mse_exp': kaggle_mse(outputs['expectations'],
+            metrics = {'mse_exp': kaggle_mse(outputs['keypoints'],
                                              inputs['keypoints']),
                        'mse_maxp': kaggle_mse(outputs['p_max'],
                                               inputs['keypoints'])}
