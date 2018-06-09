@@ -1,5 +1,5 @@
 def get_model(name):
-    mod = __import__('models.{}'.format(name), fromlist=[''])
+    mod = __import__('jointrecog.models.{}'.format(name), fromlist=[''])
     return getattr(mod, _module_to_class(name))
 
 

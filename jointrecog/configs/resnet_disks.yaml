@@ -1,14 +1,19 @@
 data:
     name: 'kaggle_rhd'
-    validation_size: 500
-    cache_in_memory: false
-    disk_radius: 8
+    validation_size: 300
+    cache_in_memory: true
+    disk_radius: 16
+    augmentation:
+        bbox_distort: false
+        random_rotation: true
+        random_brightness: true
+        random_saturation: true
 model:
     name: 'resnet_disks'
     batch_size: 32
     eval_batch_size: 25
     learning_rate: 0.0001
-    output_kernel: [3, 3]
+    output_kernel: [3,3]
 train_iter: 80000
 validation_interval: 1000
 eval_set: 'val'
