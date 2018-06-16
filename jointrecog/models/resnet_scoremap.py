@@ -13,7 +13,6 @@ class ResnetScoremap(BaseModel):
         'image': {'shape': [None, None, None, 3], 'type': tf.float32},
         'scoremap': {'shape': [None, None, None, NUM_KEYPOINTS], 'type': tf.float32},
         'keypoints': {'shape': [None, NUM_KEYPOINTS, 2], 'type': tf.float32},
-        'disks': {'shape': [None, None, None, NUM_KEYPOINTS], 'type': tf.float32}
     }
 
     default_config = {
@@ -30,10 +29,10 @@ class ResnetScoremap(BaseModel):
             with slim.arg_scope([slim.conv2d, slim.batch_norm], trainable=is_training):
                 with slim.arg_scope(resnet.resnet_arg_scope()):
                     # Resnet Backbone
-                    _, encoder = resnet.resnet_v2_50(
+                    _, encoder = resnet.resnet_v2_152(
                             image, is_training=is_training, global_pool=False,
-                            scope='resnet_v2_50')
-                    features = encoder['resnet_v2_50/block1']
+                            scope='resnet_v2_152', input_pool=False)
+                    features = encoder['resnet_v2_152/block3']
 
                 # Upsampling of feature map to input size
                 features = tf.image.resize_bilinear(features, input_shape)
@@ -69,7 +68,7 @@ class ResnetScoremap(BaseModel):
                 max_scores = tf.stack([max_x, max_y], axis=-1)
 
         return {'scoremap': scores,
-                'expectations': expectations,
+                'keypoints': expectations,
                 'maxscores': max_scores}
 
     def _loss(self, outputs, inputs, **config):
@@ -82,7 +81,7 @@ class ResnetScoremap(BaseModel):
         metrics = {}
         with tf.name_scope('metrics'):
             metrics['expectation_l2'] = kaggle_mse(
-                    outputs['expectations'], inputs['keypoints'])
+                    outputs['keypoints'], inputs['keypoints'])
             metrics['maximum_l2'] = kaggle_mse(
                     outputs['maxscores'], inputs['keypoints'])
         return metrics

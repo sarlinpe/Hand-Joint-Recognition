@@ -1,15 +1,20 @@
 data:
     name: 'kaggle_rhd'
     validation_size: 480
-    cache_in_memory: false
-    scoremap_variance: 20
+    cache_in_memory: true
+    scoremap_variance: 100
+    augmentation:
+        bbox_distort: false
+        random_rotation: true
+        random_brightness: true
+        random_saturation: true
 model:
     name: 'resnet_scoremap'
-    batch_size: 32
+    batch_size: 24
     eval_batch_size: 32
     learning_rate: 0.0001
     output_kernel: [3, 3]
 train_iter: 200000
 validation_interval: 1000
 eval_set: 'val'
-weights: 'resnet_v2_50/resnet_v2_50.ckpt'
+weights: 'resnet_v2_152/resnet_v2_152.ckpt'
