@@ -20,12 +20,12 @@ class ResnetFc(BaseModel):
         x.set_shape([None, 128, 128, 3])
 
         with slim.arg_scope(resnet.resnet_arg_scope()):
-                _, encoder = resnet.resnet_v2_101(
+                _, encoder = resnet.resnet_v2_152(
                                             x,
                                             is_training=is_training,
                                             global_pool=False,
-                                            scope='resnet_v2_101')
-                x = encoder['resnet_v2_101/block3']
+                                            scope='resnet_v2_152')
+                x = encoder['resnet_v2_152/block4']
         with tf.variable_scope('fc'):
             x = tf.contrib.layers.flatten(x)
             x = tf.layers.dense(x, units=2*NUM_KEYPOINTS, name='out')
