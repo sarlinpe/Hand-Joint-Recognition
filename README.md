@@ -46,7 +46,7 @@ The training can be interrupted at any time using `Ctrl+C` and the weights will 
 ```
 python export_for_kaggle.py config/resnet_fc.yaml resnet_fc --augment
 ```
-The csv prediction file will be saved as `<EXPER_DIR>/resnet_fc.csv`.
+The csv prediction file will be saved as `<EXPER_DIR>/resnet_fc.csv`. We also provide the predictions of our top-scoring model as `data/resnet-152-block4_fc_no-sym_aug_rot.csv`.
 
 ## Credits
 This project was developed by [Moritz Zimmermann](https://github.com/m0oz) and [Paul-Edouard Sarlin](https://github.com/Skydes) as part of the Machine Perception course at ETH Zurich, spring semester 2018.
