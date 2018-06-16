@@ -25,7 +25,7 @@ You should have the two files `training.h5` and `testing.h5` in your data direct
 
 The encoder is initialized with weights trained on ImageNet and available [here](https://github.com/tensorflow/models/tree/master/research/slim#pre-trained-models).
 
-```b
+```
 cd <DATA_DIR> && mkdir resnet_v2_152 && cd resnet_v2_152
 wget http://download.tensorflow.org/models/resnet_v2_152_2017_04_14.tar.gz 
 tar -xzf resnet_v2_152_2017_04_14.tar.gz
@@ -35,7 +35,7 @@ tar -xzf resnet_v2_152_2017_04_14.tar.gz
 
 Our top-scoring model can be trained as follow:
 
-```b
+```
 cd jointrecog
 python experiment.py train config/resnet_fc.yaml resnet_fc
 ```
@@ -43,7 +43,10 @@ The training can be interrupted at any time using `Ctrl+C` and the weights will 
 
 ### Predictions
 
-```b
+```
 python export_for_kaggle.py config/resnet_fc.yaml resnet_fc --augment
 ```
 The csv prediction file will be saved as `<EXPER_DIR>/resnet_fc.csv`.
+
+## Credits
+This project was developed by [Moritz Zimmermann](https://github.com/m0oz) and [Paul-Edouard Sarlin](https://github.com/Skydes) as part of the Machine Perception course at ETH Zurich, spring semester 2018.
