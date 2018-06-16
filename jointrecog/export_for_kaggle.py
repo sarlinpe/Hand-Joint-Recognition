@@ -45,7 +45,7 @@ if __name__ == '__main__':
     with open(args.config, 'r') as f:
         config = yaml.load(f)
 
-    output_file = Path(EXPER_PATH, 'outputs/{}.csv'.format(export_name))
+    output_file = Path(EXPER_PATH, '{}.csv'.format(export_name))
     checkpoint_dir = Path(EXPER_PATH, experiment_name)
 
     with experiment._init_graph(config, with_dataset=True) as (net, dataset):
